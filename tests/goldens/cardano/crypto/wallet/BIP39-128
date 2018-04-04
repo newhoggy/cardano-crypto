@@ -1,7 +1,7 @@
 # Test Vector 1
 TestVector
-data-to-sign = "Hello World"
-derivation-scheme = "derivation-scheme1"
+data_to_sign = "Hello World"
+derivation_scheme = "derivation-scheme1"
 passphrase = ""
 path = "m"
 seed = "c9e4ea2f8ca1a32501e2492570a61dc30f35412cb84b5f2502500c177f22db5a"
@@ -12,8 +12,8 @@ xPub = "6d0997613ace6f96eb9e1aefc7df87ac7770d646da27239d030f58e91fcb874801409fb8
 
 # Test Vector 2
 TestVector
-data-to-sign = "Hello World"
-derivation-scheme = "derivation-scheme1"
+data_to_sign = "Hello World"
+derivation_scheme = "derivation-scheme1"
 passphrase = ""
 path = "m/0'"
 seed = "c9e4ea2f8ca1a32501e2492570a61dc30f35412cb84b5f2502500c177f22db5a"
@@ -24,8 +24,8 @@ xPub = "12c8f81f51bc7e251d6f64c02e3b4c8138583e13db939a28f68119a636d9e3e38a5f1106
 
 # Test Vector 3
 TestVector
-data-to-sign = "Hello World"
-derivation-scheme = "derivation-scheme1"
+data_to_sign = "Hello World"
+derivation_scheme = "derivation-scheme1"
 passphrase = ""
 path = "m/1'"
 seed = "c9e4ea2f8ca1a32501e2492570a61dc30f35412cb84b5f2502500c177f22db5a"
@@ -36,8 +36,8 @@ xPub = "bc85abf1758fb8de8c76ae329d3b86d0c33938c9b1d12c5456b2b8ca2d36f0506b2ecab7
 
 # Test Vector 4
 TestVector
-data-to-sign = "Hello World"
-derivation-scheme = "derivation-scheme1"
+data_to_sign = "Hello World"
+derivation_scheme = "derivation-scheme1"
 passphrase = ""
 path = "m/0'/1'"
 seed = "c9e4ea2f8ca1a32501e2492570a61dc30f35412cb84b5f2502500c177f22db5a"
@@ -48,8 +48,8 @@ xPub = "7602ba1065f776a11ca9e77d6bda40c411ea47151a59623de1a6f59b2f107a89bc606169
 
 # Test Vector 5
 TestVector
-data-to-sign = "Hello World"
-derivation-scheme = "derivation-scheme1"
+data_to_sign = "Hello World"
+derivation_scheme = "derivation-scheme1"
 passphrase = ""
 path = "m/0'/1'/2'"
 seed = "c9e4ea2f8ca1a32501e2492570a61dc30f35412cb84b5f2502500c177f22db5a"
@@ -60,8 +60,8 @@ xPub = "c9d31870ba4117baad2b7a73de389b06cfe749520df5e6dc5a4a58756e899bec221137ad
 
 # Test Vector 6
 TestVector
-data-to-sign = "Hello World"
-derivation-scheme = "derivation-scheme1"
+data_to_sign = "Hello World"
+derivation_scheme = "derivation-scheme1"
 passphrase = ""
 path = "m/0'/1'/2'/2'"
 seed = "c9e4ea2f8ca1a32501e2492570a61dc30f35412cb84b5f2502500c177f22db5a"
@@ -72,8 +72,8 @@ xPub = "5793a111a877aac5cc60413b7a37f2a29a52749c6512235b761822442ee2aee38181641c
 
 # Test Vector 7
 TestVector
-data-to-sign = "Hello World"
-derivation-scheme = "derivation-scheme1"
+data_to_sign = "Hello World"
+derivation_scheme = "derivation-scheme1"
 passphrase = ""
 path = "m/0'/1'/2'/2'/1000000000'"
 seed = "c9e4ea2f8ca1a32501e2492570a61dc30f35412cb84b5f2502500c177f22db5a"
@@ -84,8 +84,8 @@ xPub = "ae4fd370c00f24d8f499dc6965719352830e4d8d24ce6d9fe7ff18867d27e8a18ae3e435
 
 # Test Vector 8
 TestVector
-data-to-sign = "Hello World"
-derivation-scheme = "derivation-scheme2"
+data_to_sign = "Hello World"
+derivation_scheme = "derivation-scheme2"
 passphrase = ""
 path = "m/0'/1'/2'/2'/1000000000'"
 seed = "c9e4ea2f8ca1a32501e2492570a61dc30f35412cb84b5f2502500c177f22db5a"
@@ -96,8 +96,8 @@ xPub = "29f6c917baefd25001764572d7c3a94001a36c053687d16a764549f77018d4e6d1efd3c0
 
 # Test Vector 9
 TestVector
-data-to-sign = "Hello World"
-derivation-scheme = "derivation-scheme2"
+data_to_sign = "Hello World"
+derivation_scheme = "derivation-scheme2"
 passphrase = ""
 path = "m/0'/1'"
 seed = "c9e4ea2f8ca1a32501e2492570a61dc30f35412cb84b5f2502500c177f22db5a"
@@ -108,8 +108,8 @@ xPub = "b6eb7e57b55f06812c101b29e1b3a5906b5db3b2f6fbfc12e562f848b54acc36e7f8ddcc
 
 # Test Vector 10
 TestVector
-data-to-sign = "Data"
-derivation-scheme = "derivation-scheme2"
+data_to_sign = "Data"
+derivation_scheme = "derivation-scheme2"
 passphrase = ""
 path = "m/0'/1'/24/2000"
 seed = "c9e4ea2f8ca1a32501e2492570a61dc30f35412cb84b5f2502500c177f22db5a"
@@ -120,8 +120,8 @@ xPub = "998cbec5bbb5930d63a9db05c1e2188459f44df37d4e212e3fda5b187103ce794bda7290
 
 # Test Vector 11
 TestVector
-data-to-sign = "Hello World"
-derivation-scheme = "derivation-scheme2"
+data_to_sign = "Hello World"
+derivation_scheme = "derivation-scheme2"
 passphrase = ""
 path = "m/0'/1'/24/2000'"
 seed = "c9e4ea2f8ca1a32501e2492570a61dc30f35412cb84b5f2502500c177f22db5a"

@@ -1,7 +1,7 @@
 # Test Vector 1
 TestVector
-data-to-sign = "Hello World"
-derivation-scheme = "derivation-scheme1"
+data_to_sign = "Hello World"
+derivation_scheme = "derivation-scheme1"
 passphrase = ""
 path = "m"
 seed = "3052df954a458438592f9b93a87ce7b0c4d9056b7581f2cb7436e8e48c129803"
@@ -12,8 +12,8 @@ xPub = "d429a7e0630497c9b1632f5aca603be49ddf71359fdba2104535413d51b062d7383a46c1
 
 # Test Vector 2
 TestVector
-data-to-sign = "Hello World"
-derivation-scheme = "derivation-scheme1"
+data_to_sign = "Hello World"
+derivation_scheme = "derivation-scheme1"
 passphrase = ""
 path = "m/0'"
 seed = "3052df954a458438592f9b93a87ce7b0c4d9056b7581f2cb7436e8e48c129803"
@@ -24,8 +24,8 @@ xPub = "f7a141d057b48f14f2f43eba9d03b74da08b3da4f9c1e18153739986d5a73d239ff97935
 
 # Test Vector 3
 TestVector
-data-to-sign = "Hello World"
-derivation-scheme = "derivation-scheme1"
+data_to_sign = "Hello World"
+derivation_scheme = "derivation-scheme1"
 passphrase = ""
 path = "m/1'"
 seed = "3052df954a458438592f9b93a87ce7b0c4d9056b7581f2cb7436e8e48c129803"
@@ -36,8 +36,8 @@ xPub = "ee69d801e5c664f6a1ec96690e824e6bf588ffca9b2f825dd352279692422e1c3bb6df48
 
 # Test Vector 4
 TestVector
-data-to-sign = "Hello World"
-derivation-scheme = "derivation-scheme1"
+data_to_sign = "Hello World"
+derivation_scheme = "derivation-scheme1"
 passphrase = ""
 path = "m/0'/1'"
 seed = "3052df954a458438592f9b93a87ce7b0c4d9056b7581f2cb7436e8e48c129803"
@@ -48,8 +48,8 @@ xPub = "bf2ae3fd1acf776a63bca5b97805999c345ede268fa5e6e1d31ee84b1f4a0609d37ba78a
 
 # Test Vector 5
 TestVector
-data-to-sign = "Hello World"
-derivation-scheme = "derivation-scheme1"
+data_to_sign = "Hello World"
+derivation_scheme = "derivation-scheme1"
 passphrase = ""
 path = "m/0'/1'/2'"
 seed = "3052df954a458438592f9b93a87ce7b0c4d9056b7581f2cb7436e8e48c129803"
@@ -60,8 +60,8 @@ xPub = "e5bb8d357ed4ad2e1401fdbc140eb41831793d7e6208b8cb74eaad38d1515534f4b464e7
 
 # Test Vector 6
 TestVector
-data-to-sign = "Hello World"
-derivation-scheme = "derivation-scheme1"
+data_to_sign = "Hello World"
+derivation_scheme = "derivation-scheme1"
 passphrase = ""
 path = "m/0'/1'/2'/2'"
 seed = "3052df954a458438592f9b93a87ce7b0c4d9056b7581f2cb7436e8e48c129803"
@@ -72,8 +72,8 @@ xPub = "027617912d43720d9a6a336df82cc18fadcada88fe4367560775ed7710d13bab398158a2
 
 # Test Vector 7
 TestVector
-data-to-sign = "Hello World"
-derivation-scheme = "derivation-scheme1"
+data_to_sign = "Hello World"
+derivation_scheme = "derivation-scheme1"
 passphrase = ""
 path = "m/0'/1'/2'/2'/1000000000'"
 seed = "3052df954a458438592f9b93a87ce7b0c4d9056b7581f2cb7436e8e48c129803"
