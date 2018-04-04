@@ -8,6 +8,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module Main (main) where
 
@@ -17,7 +18,7 @@ import qualified Basement.Sized.List as LN
 import Foundation
 import Foundation.Check
 import qualified Foundation.Parser as Parser
-import Foundation.Collection ((!), nonEmpty_)
+import Foundation.Collection ((!), nonEmpty_, isSuffixOf, splitOn)
 import Foundation.String
 import Foundation.String.Builder (emit)
 import Foundation.String.Read (readIntegral)
@@ -26,6 +27,8 @@ import Basement.Block (Block)
 import Data.List (elemIndex)
 
 import Inspector
+import qualified Inspector.TestVector.Types as Type
+import qualified Inspector.TestVector.Value as Value
 
 import Data.ByteArray (Bytes, convert)
 import qualified Data.ByteArray as B
@@ -39,7 +42,7 @@ import qualified Cardano.Crypto.Praos.VRF as VRF
 import Test.Orphans
 
 main :: IO ()
-main = defaultMain $ do
+main = defaultTest $ do
     goldenBIP39
     goldenHDWallet
     goldenPaperwallet
@@ -84,9 +87,9 @@ type HDWallet n
     = "cardano" :> "crypto" :> "wallet" :> PathParameter "BIP39-" n
       :> Payload "words" (Mnemonic 'English (MnemonicWords n))
       :> Payload "passphrase" Passphrase
-      :> Payload "derivation-scheme" DerivationScheme
+      :> Payload "derivation_scheme" DerivationScheme
       :> Payload "path" ChainCodePath
-      :> Payload "data-to-sign" String
+      :> Payload "data_to_sign" String
       :> ( Payload "xPub" XPub
          , Payload "xPriv" XPrv
          , Payload "signature" XSignature
@@ -173,28 +176,27 @@ newtype ChainCodePath = Root [Word32]
 instance Arbitrary ChainCodePath where
     arbitrary = Root <$> arbitrary
 instance Inspectable ChainCodePath where
-    documentation _ = "derivation code: `m[([0-9]+|[0-9]+')]*`"
-    exportType _ Rust = exportType (Proxy @[Word32]) Rust
-    exportType _ t    = exportType (Proxy @String) t
-    display Rust (Root l) = display Rust l
-    display t (Root l) = display t (intercalate "/" ((:) "m" $ f <$> l))
+    documentation _ = "Deviration path, a list of indexes to the correct derivation path."
+    exportType _ = Type.Array (Type.UnsizedArray Type.Unsigned32)
+    builder (Root l) = builder l
+    parser (Value.Array l) = Root <$> parser (Value.Array l)
+    parser v = Root <$> oldParser v
       where
-        f :: Word32 -> String
-        f w
-          | w >= 0x80000000 = show (w - 0x80000000) <> "'"
-          | otherwise       = show w
-    parser _ = do
-        Parser.elements "\"m"
-        l <- Parser.many $ do
-                Parser.element '/'
-                r <- Parser.takeWhile (`elem` ['0'..'9'])
-                mh <- Parser.optional $ Parser.element '\''
-                r' <- maybe (Parser.reportError $ Parser.Expected "Word32" r) pure $ readIntegral r
-                pure $ case mh of
-                    Nothing -> r'
-                    Just () -> r' + 0x80000000
-        Parser.element '"'
-        pure $ Root l
+        oldParser = withString "ChainCodePath" $ \str ->
+            go (splitOn (== '/') str)
+        go :: [String] -> Either String [Word32]
+        go [] = pure []
+        go (x:xs)
+            | x == "m"         = go xs
+            | isSuffixOf "'" x = do
+                h <- ri (takeWhile (`elem` ['0'..'9']) x)
+                (:) (h + 0x80000000) <$> go xs
+            | otherwise        = do
+                h <- ri x
+                (:) h <$> go xs
+        ri str = case readIntegral str of
+            Nothing -> reportError "Invalid integer" (Value.String str)
+            Just i  -> pure i
 
 -- Enum for the support language to read/write from mnemonic
 data Language = English
@@ -215,72 +217,11 @@ instance Arbitrary (Mnemonic 'English 21) where
 instance Arbitrary (Mnemonic 'English 24) where
     arbitrary = Mnemonic . entropyToWords @256 @8 @24 <$> arbitrary
 
-instance Inspectable (Mnemonic 'English 12) where
-    display Rust (Mnemonic l) = display Rust (maybe undefined entropyRaw $ wordsToEntropy @128 @4 @12 l)
-    display t (Mnemonic l) = display t (mnemonicSentenceToString english l)
-    documentation _ = "UTF8 BIP39 passphrase (english)"
-    exportType _ Rust = emit "[u8;16]"
-    exportType _ t = exportType (Proxy @String) t
-    parser _ = do
-        strs <- words <$> parser Proxy
-        Mnemonic <$> case mnemonicPhrase @12 strs of
-            Nothing -> Parser.reportError $ Parser.Expected (show n <> " words") (show (length strs) <> " words")
+instance ValidMnemonicSentence n => Inspectable (Mnemonic 'English n) where
+    builder (Mnemonic l) = builder (mnemonicSentenceToString english l)
+    documentation _ = "BIP39 mnemonic sentence of " <> show (natVal (Proxy @n)) <> " english mnemonic words."
+    exportType _ = exportType (Proxy @String)
+    parser = withString ("Mnemonic 'English " <> show (natVal (Proxy @n))) $ \str ->
+        Mnemonic <$> case mnemonicPhrase @n $ words str of
+            Nothing -> reportError "Incompatible BIP39 mnemonic sentence." (Value.String str)
             Just l  -> pure $ mnemonicPhraseToMnemonicSentence english l
-      where
-        n = natVal @12 Proxy
-
-instance Inspectable (Mnemonic 'English 15) where
-    display Rust (Mnemonic l) = display Rust (maybe undefined entropyRaw $ wordsToEntropy @160 @5 @15 l)
-    display t (Mnemonic l) = display t (mnemonicSentenceToString english l)
-    documentation _ = "UTF8 BIP39 passphrase (english)"
-    exportType _ Rust = emit "[u8;20]"
-    exportType _ t = exportType (Proxy @String) t
-    parser _ = do
-        strs <- words <$> parser Proxy
-        Mnemonic <$> case mnemonicPhrase @15 strs of
-            Nothing -> Parser.reportError $ Parser.Expected (show n <> " words") (show (length strs) <> " words")
-            Just l  -> pure $ mnemonicPhraseToMnemonicSentence english l
-      where
-        n = natVal @15 Proxy
-
-instance Inspectable (Mnemonic 'English 18) where
-    display Rust (Mnemonic l) = display Rust (maybe undefined entropyRaw $ wordsToEntropy @192 @6 @18 l)
-    display t (Mnemonic l) = display t (mnemonicSentenceToString english l)
-    documentation _ = "UTF8 BIP39 passphrase (english)"
-    exportType _ Rust = emit "[u8;24]"
-    exportType _ t = exportType (Proxy @String) t
-    parser _ = do
-        strs <- words <$> parser Proxy
-        Mnemonic <$> case mnemonicPhrase @18 strs of
-            Nothing -> Parser.reportError $ Parser.Expected (show n <> " words") (show (length strs) <> " words")
-            Just l  -> pure $ mnemonicPhraseToMnemonicSentence english l
-      where
-        n = natVal @18 Proxy
-
-instance Inspectable (Mnemonic 'English 21) where
-    display Rust (Mnemonic l) = display Rust (maybe undefined entropyRaw $ wordsToEntropy @224 @7 @21 l)
-    display t (Mnemonic l) = display t (mnemonicSentenceToString english l)
-    documentation _ = "UTF8 BIP39 passphrase (english)"
-    exportType _ Rust = emit "[u8;28]"
-    exportType _ t = exportType (Proxy @String) t
-    parser _ = do
-        strs <- words <$> parser Proxy
-        Mnemonic <$> case mnemonicPhrase @21 strs of
-            Nothing -> Parser.reportError $ Parser.Expected (show n <> " words") (show (length strs) <> " words")
-            Just l  -> pure $ mnemonicPhraseToMnemonicSentence english l
-      where
-        n = natVal @21 Proxy
-
-instance Inspectable (Mnemonic 'English 24) where
-    display Rust (Mnemonic l) = display Rust (maybe undefined entropyRaw $ wordsToEntropy @256 @8 @24 l)
-    display t (Mnemonic l) = display t (mnemonicSentenceToString english l)
-    documentation _ = "UTF8 BIP39 passphrase (english)"
-    exportType _ Rust = emit "[u8;32]"
-    exportType _ t = exportType (Proxy @String) t
-    parser _ = do
-        strs <- words <$> parser Proxy
-        Mnemonic <$> case mnemonicPhrase @24 strs of
-            Nothing -> Parser.reportError $ Parser.Expected (show n <> " words") (show (length strs) <> " words")
-            Just l  -> pure $ mnemonicPhraseToMnemonicSentence english l
-      where
-        n = natVal @24 Proxy

@@ -8,16 +8,16 @@ option: exe flag=cardano-crypto:golden-tests
 option: gaugedep extradep=gauge-0.2.1
 
 # builds
-build: ghc-8.0 gitdep=inspector
-build: ghc-8.2 gitdep=inspector gaugedep
-build: ghc-8.2-exe gitdep=inspector exe gaugedep
+build: ghc-8.0 gitdep=inspector extradep=basement-0.0.7 extradep=foundation-0.0.20 extradep=memory-0.14.16
+build: ghc-8.2 gitdep=inspector extradep=basement-0.0.7 extradep=foundation-0.0.20 extradep=memory-0.14.16 gaugedep
+build: ghc-8.2-exe gitdep=inspector extradep=basement-0.0.7 extradep=foundation-0.0.20 extradep=memory-0.14.16 exe gaugedep
 build: ghc-8.4 gitdep=inspector extradep=basement-0.0.7 extradep=cryptonite-0.25 extradep=cryptonite-openssl-0.6 extradep=foundation-0.0.20 extradep=hashable-1.2.7.0 extradep=memory-0.14.15 allow-newer gaugedep extradep=vector-0.12.0.1 extradep=primitive-0.6.3.0
 
 # packages
 package: '.'
 
 # deps:
-gitdep: inspector https://github.com/primetype/inspector b2e49ba7df07187f6bf9feeb505ef325d3bd00ac
+gitdep: inspector https://github.com/primetype/inspector 88b225ed3500e97e637c534d9084da7c89068695
 
 # extra builds
 hlint: allowed-failure

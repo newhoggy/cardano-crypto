@@ -86,9 +86,9 @@ test-suite cardano-crypto-golden-tests
   main-is:             GoldenTest.hs
   other-modules:       Test.Orphans
   build-depends:       base
-                     , basement
-                     , foundation
-                     , memory
+                     , basement >= 0.0.7
+                     , foundation >= 0.0.20
+                     , memory >= 0.14.15
                      , bytestring
                      , cryptonite
                      , inspector
@@ -107,9 +107,9 @@ executable golden-tests
   else
     buildable:         False
   build-depends:       base
-                     , basement
-                     , foundation
-                     , memory
+                     , basement >= 0.0.7
+                     , foundation >= 0.0.20
+                     , memory >= 0.14.15
                      , bytestring
                      , cryptonite
                      , cardano-crypto

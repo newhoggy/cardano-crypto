@@ -9,13 +9,15 @@ module Test.Orphans
     ) where
 
 import Foundation
-import Foundation.Parser (elements, ParseError(..), reportError, takeAll)
+import Foundation.Parser (elements, ParseError(..), takeAll)
 import Basement.Nat
 import Basement.String.Builder (emit, emitChar)
 
 import Basement.Block (Block)
 
 import Inspector
+import qualified Inspector.TestVector.Types as Type
+import qualified Inspector.TestVector.Value as Value
 
 import Crypto.Error
 
@@ -31,122 +33,132 @@ import qualified Cardano.Crypto.Praos.VRF as VRF
 import qualified Crypto.Encoding.BIP39 as BIP39
 
 instance Inspectable Seed.ScrambleIV where
-    parser _ = do
-        bs <- parser Proxy
-        case Seed.mkScrambleIV bs of
-            CryptoFailed err -> reportError (Expected "ScrambleIV" (show err))
+    documentation _ = "4 bytes of scramble IV needed to password shield the seed."
+    exportType _ = Type.Array (Type.SizedArray Type.Unsigned8 4)
+    parser v = do
+        bs <- parser v
+        case Seed.mkScrambleIV (bs :: ByteString) of
+            CryptoFailed err -> reportError (show err) v
             CryptoPassed r   -> pure r
-    documentation _ = "hexadecimal encoded bytes"
-    exportType _ Rust = emit "[u8;4]"
-    exportType _ t    = exportType (Proxy @(Block Word8)) t
-    display t = display t . (convert :: Seed.ScrambleIV -> Block Word8)
+    builder t = builder (convert t :: ByteString)
 
 instance Inspectable P256.Scalar where
-    parser _ = P256.Scalar <$> parser Proxy
-    documentation _ = documentation (Proxy @Integer)
+    documentation _ = "P256 Scalar"
     exportType _ = exportType (Proxy @Integer)
-    display t = display t . P256.unScalar
+    parser = withInteger "P256.Scalar" $ pure . P256.Scalar
+    builder = builder . P256.unScalar
 
 instance Inspectable Wallet.DerivationScheme where
     documentation _ = "DerivationScheme: either 'derivation-scheme1' or 'derivation-scheme2'"
     exportType _ =  exportType (Proxy @String)
-    parser _ = (elements "\"derivation-scheme1\"" >> pure Wallet.DerivationScheme1)
-           <|> (elements "\"derivation-scheme2\"" >> pure Wallet.DerivationScheme2)
-           <|> (takeAll >>= reportError . Expected "'derivation-scheme1' or 'derivation-scheme2'")
-    display _ Wallet.DerivationScheme1 = emit "\"derivation-scheme1\""
-    display _ Wallet.DerivationScheme2 = emit "\"derivation-scheme2\""
+    parser = withString "DerivationScheme" $ \str -> case str of
+        "derivation-scheme1" -> pure Wallet.DerivationScheme1
+        "derivation-scheme2" -> pure Wallet.DerivationScheme2
+        _                    -> Left $ "Unknown scheme: " <> show str
+    builder Wallet.DerivationScheme1 = Value.String "derivation-scheme1"
+    builder Wallet.DerivationScheme2 = Value.String "derivation-scheme2"
 
 instance Inspectable Wallet.XPub where
-    parser _ = do
-        b <- parser Proxy
-        case Wallet.xpub b of
-            Left err -> reportError $ Expected "XPub" (fromList err)
+    documentation _ = "Extended PublicKey"
+    exportType _ = Type.Array (Type.SizedArray Type.Unsigned8 64)
+    parser v = do
+        b <- parser v
+        case Wallet.xpub (b :: ByteString) of
+            Left err -> reportError (fromList err) v
             Right e  -> pure e
-    documentation _ = "hexadecimal encoded bytes"
-    exportType _ = exportType (Proxy @(Block Word8))
-    display t = display t . Wallet.unXPub
+    builder = builder . Wallet.unXPub
 
 instance Inspectable Wallet.XPrv where
-    parser _ = do
-        b <- parser Proxy
-        case Wallet.xprv (b :: Bytes) of
-            Left err -> reportError $ Expected "XPrv" (fromList err)
+    documentation _ = "Extended PrivateKey"
+    exportType _ = Type.Array (Type.SizedArray Type.Unsigned8 128)
+    parser v = do
+        b <- parser v
+        case Wallet.xprv (b :: ByteString) of
+            Left err -> reportError (fromList err) v
             Right e  -> pure e
-    documentation _ = "hexadecimal encoded bytes"
-    exportType _ = exportType (Proxy @(Block Word8))
-    display t = display t . (convert :: Wallet.XPrv -> Block Word8)
+    builder t = builder (convert t :: ByteString)
 
 instance Inspectable Wallet.XSignature where
-    parser _ = do
-        b <- parser Proxy
-        case Wallet.xsignature b of
-            Left err -> reportError $ Expected "XSignature" (fromList err)
+    documentation _ = "Extended Signature"
+    exportType _ = Type.Array (Type.SizedArray Type.Unsigned8 64)
+    parser v = do
+        b <- parser v
+        case Wallet.xsignature (b :: ByteString) of
+            Left err -> reportError (fromList err) v
             Right e  -> pure e
-    documentation _ = "hexadecimal encoded bytes"
-    exportType _ = exportType (Proxy @(Block Word8))
-    display t = display t . (convert :: Wallet.XSignature -> Block Word8)
+    builder t = builder (convert t :: ByteString)
 
 instance Inspectable DLEQ.Challenge where
-    documentation _ = "hexadecimal encoded bytes"
-    display t (DLEQ.Challenge c) = display t c
-    exportType _ = exportType (Proxy @(Block Word8))
-    parser _ = DLEQ.Challenge <$> parser Proxy
+    documentation _ = "DLEQ Challenge"
+    exportType _ = exportType (Proxy @Bytes)
+    builder (DLEQ.Challenge c) = builder c
+    parser v = DLEQ.Challenge <$> parser v
 
 instance Inspectable DLEQ.Proof where
-    documentation _ = "tuple of a challenge key and a `z`"
-    exportType _ t = emitChar '(' <> exportType (Proxy @DLEQ.Challenge) t <> emit ", " <> exportType (Proxy @P256.Scalar) t <> emitChar ')'
-    display Rust (DLEQ.Proof u dleq) = emit "(" <> display Rust u <> emit ", " <> display Rust dleq <> emit ")"
-    display t    (DLEQ.Proof u dleq) = emit "challenge: " <> display t u <> emit ", z: " <> display t dleq
-    parser _ = do
-        elements "challenge: "
-        c <- parser Proxy
-        elements ", z: "
-        DLEQ.Proof c <$> parser Proxy
+    documentation _ = "DLEQ Proof"
+    exportType _ = Type.Object $ Type.ObjectDef
+        [ ("challenge", exportType (Proxy @(DLEQ.Challenge)))
+        , ("z", exportType (Proxy @(P256.Scalar)))
+        ]
+    builder (DLEQ.Proof u z) = Value.Object $ Value.ObjectDef
+        [ ("challenge", builder u)
+        , ("z", builder z)
+        ]
+    parser = withStructure "DLEQ.Proof" $ \obj -> do
+        u <- parser =<< field obj "challenge"
+        dleq <- parser =<< field obj "z"
+        pure (DLEQ.Proof u dleq)
 
 instance Inspectable VRF.SecretKey where
-    documentation _ = "hexadecimal encoded bytes"
-    exportType _ = exportType (Proxy @(Block Word8))
-    display t = display t . (VRF.secretKeyToBytes :: VRF.SecretKey -> Block Word8)
-    parser _ = VRF.secretKeyFromBytes <$> parser (Proxy @(Block Word8))
+    documentation _ = "Verifiable Random Function's secret key."
+    exportType _ = exportType (Proxy @Bytes)
+    builder t = builder (VRF.secretKeyToBytes t :: Bytes)
+    parser v = VRF.secretKeyFromBytes <$> parser @Bytes v
 
 instance Inspectable VRF.PublicKey where
-    documentation _ = "hexadecimal encoded bytes"
-    exportType _ = exportType (Proxy @(Block Word8))
-    display t = display t . (VRF.publicKeyToBytes :: VRF.PublicKey -> Block Word8)
-    parser _ = do
-        b <- parser (Proxy @(Block Word8))
-        case VRF.publicKeyFromBytes (b :: Block Word8) of
-            Left err -> reportError $ Expected "VRF.PublicKey" (fromList err)
-            Right v -> pure v
+    documentation _ = "Verifiable Random Function's public key."
+    exportType _ = exportType (Proxy @Bytes)
+    builder t = builder (VRF.publicKeyToBytes t :: Bytes)
+    parser v = do
+        b <- parser v
+        case VRF.publicKeyFromBytes (b :: Bytes) of
+            Left err -> reportError (fromList err) v
+            Right pk -> pure pk
 
 instance Inspectable VRF.Proof where
-    documentation _ = "tuple of a public key and a DLEQ Proof"
-    exportType _ Rust = emitChar '(' <> exportType (Proxy @VRF.PublicKey) Rust <> emit ", " <> exportType (Proxy @DLEQ.Proof) Rust <> emitChar ')'
-    exportType _ t    = exportType (Proxy @(Block Word8)) t
-    parser _ = do
-        elements "u: "
-        u <- parser Proxy
-        elements ", "
-        VRF.Proof u <$> parser Proxy
-    display Rust (VRF.Proof u dleq) = emit "(" <> display Rust u <> emit ", " <> display Rust dleq <> emit ")"
-    display t    (VRF.Proof u dleq) = emit "u: " <> display t    u <> emit ", " <> display t dleq
+    documentation _ = "Verifiable Random Function's proof."
+    exportType _ = Type.Object $ Type.ObjectDef
+        [ ("publickey", exportType (Proxy @(VRF.PublicKey)))
+        , ("dleq", exportType (Proxy @(DLEQ.Proof)))
+        ]
+    builder (VRF.Proof pk dleq) = Value.Object $ Value.ObjectDef
+        [ ("publickey", builder pk)
+        , ("dleq", builder dleq)
+        ]
+    parser = withStructure "VRF.Proof" $ \obj -> do
+        u <- parser =<< field obj "publickey"
+        dleq <- parser =<< field obj "dleq"
+        pure (VRF.Proof u dleq)
 
 instance (BIP39.ValidEntropySize n, BIP39.ValidChecksumSize n csz) => Inspectable (BIP39.Entropy n) where
-    documentation _ = "hexadecimal encoded bytes"
-    display t = display t . BIP39.entropyRaw
-    exportType _ = exportType (Proxy @(Block Word8))
-    parser _ = do
-        bs <- parser (Proxy @(Block Word8))
-        case BIP39.toEntropy  @n bs of
-            Nothing -> reportError (Expected "Entropy" "not the correct size, or invalid checksum")
+    documentation _ = "BIP39 entropy of " <> show (natVal (Proxy @n)) <> " bits."
+    exportType _ = Type.Array (Type.SizedArray Type.Unsigned8 size)
+      where
+        bits = natVal (Proxy @n)
+        size = fromIntegral $ bits `div` 8
+    parser v = do
+        bs <- parser v
+        case BIP39.toEntropy @n (bs :: Bytes) of
+            Nothing -> reportError "Entropy is not the correct size, or invalid checksum" v
             Just r  -> pure r
+    builder = builder . BIP39.entropyRaw
 instance Inspectable BIP39.Seed where
-    documentation _ = "hexadecimal encoded bytes"
-    exportType _ = exportType (Proxy @(Block Word8))
-    parser _ = convert <$> parser (Proxy @(Block Word8))
-    display t = display t . (convert :: BIP39.Seed -> Block Word8)
+    documentation _ = "BIP30 Seed"
+    exportType _ = exportType (Proxy @Bytes)
+    parser v = convert <$> (parser v :: Either String Bytes)
+    builder t = builder (convert t :: Bytes)
 instance Inspectable ByteString where
-    documentation _ = "hexadecimal encoded bytes"
-    exportType _ = exportType (Proxy @(Block Word8))
-    parser _ = convert <$> parser (Proxy @(Block Word8))
-    display t = display t . (convert :: ByteString -> Block Word8)
+    documentation _ = "Bytestring, can be a proper utf8 string or an array of bytes..."
+    exportType _ = exportType (Proxy @Bytes)
+    parser v = convert <$> (parser v :: Either String Bytes)
+    builder t = builder (convert t :: Bytes)
